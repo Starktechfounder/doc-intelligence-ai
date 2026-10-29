@@ -1,4 +1,7 @@
 pydantic
 pydantic-settings
 python-dotenv
+pypdf
+scikit-learn
+numpy
 pytest
