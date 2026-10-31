@@ -10,7 +10,56 @@ A production-ready Enterprise Document Intelligence & Policy Q&A system.
 ## Environment Configuration
 Copy `.env.example` to `.env` and configure your API keys and environment variables.
 
-## Usage Example: Document Loading, Chunking & Retrieval
+## Running the API Service
+
+Start the FastAPI application with Uvicorn:
+
+```bash
+uvicorn src.main:app --reload
+```
+
+Interactive API documentation (Swagger UI) is available at `http://127.0.0.1:8000/docs`.
+
+### Key Endpoints
+
+- **`GET /health`**: Returns service health status without exposing credentials or internal state.
+- **`POST /ingest/file`**: Upload and ingest document files (`.txt`, `.md`, `.pdf`).
+- **`GET /documents`**: List summary of currently indexed documents.
+- **`POST /query`**: Submit a natural language question and receive grounded answers with citations.
+
+#### Example Query Payload:
+```json
+{
+  "query": "What are the password length requirements?",
+  "top_k": 3,
+  "min_score": 0.1
+}
+```
+
+#### Example Answer Response:
+```json
+{
+  "text": "Passwords must contain at least 12 characters including uppercase, lowercase, numbers, and special characters.",
+  "citations": [
+    {
+      "chunk_id": "chunk_a1b2c3d4",
+      "snippet": "At least 12 characters"
+    }
+  ],
+  "confidence": 0.95,
+  "is_sufficient": true
+}
+```
+
+## Running Tests
+
+Run all unit and integration tests using pytest:
+
+```bash
+python -m pytest
+```
+
+## Python SDK / Core Module Usage Example
 
 ```python
 from src.document_loader import DocumentLoader
