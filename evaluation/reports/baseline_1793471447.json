@@ -1,0 +1,44 @@
+{
+  "total_queries": 3,
+  "avg_latency": 0.0017292499542236328,
+  "retrieval_accuracy": 1.0,
+  "avg_keyword_score": 0.16666666666666666,
+  "results": [
+    {
+      "id": "eval_001",
+      "query": "What are the password requirements?",
+      "retrieval_success": true,
+      "keyword_score": 0.5,
+      "matched_keywords": [
+        "12 characters",
+        "special characters"
+      ],
+      "citation_count": 1,
+      "valid_citations": 1,
+      "latency": 0.003031492233276367,
+      "is_sufficient": true
+    },
+    {
+      "id": "eval_002",
+      "query": "How is access control handled?",
+      "retrieval_success": true,
+      "keyword_score": 0.0,
+      "matched_keywords": [],
+      "citation_count": 1,
+      "valid_citations": 1,
+      "latency": 0.0011975765228271484,
+      "is_sufficient": true
+    },
+    {
+      "id": "eval_003",
+      "query": "What are the audit procedures?",
+      "retrieval_success": true,
+      "keyword_score": 0.0,
+      "matched_keywords": [],
+      "citation_count": 1,
+      "valid_citations": 1,
+      "latency": 0.0009586811065673828,
+      "is_sufficient": true
+    }
+  ]
+}
