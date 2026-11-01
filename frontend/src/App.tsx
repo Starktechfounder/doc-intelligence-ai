@@ -1,122 +1,69 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import React, { useState, useEffect, useCallback } from 'react';
+import { Header } from './components/Header';
+import { DocumentUpload } from './components/DocumentUpload';
+import { DocumentList } from './components/DocumentList';
+import { QuestionForm } from './components/QuestionForm';
+import { AnswerDisplay } from './components/AnswerDisplay';
+import { api } from './api/client';
+import { Answer, DocumentSummary, HealthResponse } from './types/api';
+import './index.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [documents, setDocuments] = useState<DocumentSummary[]>([]);
+  const [answer, setAnswer] = useState<Answer | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [appLoading, setAppLoading] = useState(false);
+
+  const fetchAppData = useCallback(async () => {
+    setAppLoading(true);
+    try {
+      const [h, docs] = await Promise.all([api.getHealth(), api.listDocuments()]);
+      setHealth(h);
+      setDocuments(docs);
+    } catch (e) {
+      console.error('Failed to sync app state', e);
+    } finally {
+      setAppLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAppData();
+  }, [fetchAppData]);
+
+  const handleQuery = async (query: string, top_k: number, min_score: number) => {
+    setLoading(true);
+    setAnswer(null);
+    try {
+      const res = await api.query(query, top_k, min_score);
+      setAnswer(res);
+    } catch (e) {
+      console.error('Query failed', e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-8 font-sans">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <Header health={health} loading={appLoading} onRefresh={fetchAppData} />
 
-      <div className="ticks"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1 space-y-6">
+            <DocumentUpload onIngestSuccess={fetchAppData} />
+            <DocumentList documents={documents} loading={appLoading} onRefresh={fetchAppData} />
+          </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+          <div className="lg:col-span-2 space-y-6">
+            <QuestionForm onSubmit={handleQuery} loading={loading} disabled={documents.length === 0} />
+            <AnswerDisplay answer={answer} loading={loading} />
+          </div>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;

@@ -4,6 +4,8 @@ from src.llm_client import LLMClient
 from src.schemas import Answer, Citation
 import json
 import re
+import os
+import logging
 
 class AnswerGenerator:
     """
@@ -45,6 +47,9 @@ class AnswerGenerator:
             )
         evidence_str = "\n\n".join(context_parts)
 
+        # Initialize logging for answer generation
+        logger = logging.getLogger(__name__)
+
         system_prompt = (
             "You are an enterprise document intelligence assistant. "
             "Your task is to answer the user's question strictly based on the provided source documents. "
@@ -67,7 +72,17 @@ class AnswerGenerator:
             "}"
         )
 
-        raw_response = self.llm_client.generate(prompt=prompt, system_prompt=system_prompt)
+        # Generate answer with error handling
+        try:
+            raw_response = self.llm_client.generate(prompt=prompt, system_prompt=system_prompt)
+        except Exception as e:
+            logger.error(f"LLM client failed to generate answer: {e}")
+            return Answer(
+                text="Unable to generate answer due to a model error.",
+                citations=[],
+                confidence=0.0,
+                is_sufficient=False
+            )
 
         return self._parse_and_validate_response(raw_response, results)
 
@@ -106,9 +121,10 @@ class AnswerGenerator:
             )
 
         except (json.JSONDecodeError, Exception) as e:
+            logger.error(f"Failed to parse LLM response: {e}")
             # Fallback if model output is not valid JSON
             return Answer(
-                text=raw_response,
+                text="The model returned an invalid response that could not be parsed.",
                 citations=[],
                 confidence=0.1,
                 is_sufficient=False
