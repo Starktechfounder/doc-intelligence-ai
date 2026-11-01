@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Loader2, HelpCircle, Sliders } from 'lucide-react';
+import { Search, Loader2, Sparkles, SlidersHorizontal, CornerDownLeft } from 'lucide-react';
 
 interface QuestionFormProps {
   onSubmit: (query: string, top_k: number, min_score: number) => void;
@@ -11,7 +11,7 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({ onSubmit, loading, d
   const [query, setQuery] = useState('');
   const [topK, setTopK] = useState(3);
   const [minScore, setMinScore] = useState(0.0);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,59 +19,77 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({ onSubmit, loading, d
     onSubmit(query.trim(), topK, minScore);
   };
 
-  const sampleQueries = [
-    "What are the password requirements?",
-    "How is multi-factor authentication enforced?",
-    "What are the incident response procedures?"
+  const sampleQuestions = [
+    "What are the password length and complexity requirements?",
+    "When is Multi-Factor Authentication (MFA) mandatory?",
+    "How should security incidents and breaches be reported?"
   ];
 
   return (
-    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-      <div className="flex justify-between items-center mb-3">
-        <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-          <Search className="w-5 h-5 text-indigo-600" /> Ask a Policy Question
+    <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-6 shadow-xl space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-2 font-mono">
+          <Search className="w-4 h-4 text-cyan-400" /> Policy Search & Q&A
         </h2>
         <button
           type="button"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className="text-xs text-slate-500 hover:text-indigo-600 flex items-center gap-1"
+          onClick={() => setShowSettings(!showSettings)}
+          className="text-xs text-slate-400 hover:text-cyan-400 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 transition"
         >
-          <Sliders className="w-3.5 h-3.5" />
-          {showAdvanced ? 'Hide Settings' : 'Retrieval Settings'}
+          <SlidersHorizontal className="w-3.5 h-3.5" />
+          <span>{showSettings ? 'Hide Tuning' : 'Retrieval Tuning'}</span>
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
+        {/* Main query input */}
+        <div className="relative">
           <textarea
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Type your question about uploaded documents..."
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                if (query.trim() && !disabled && !loading) {
+                  onSubmit(query.trim(), topK, minScore);
+                }
+              }
+            }}
+            placeholder="Ask a question about security controls, audit policies, or compliance guidelines..."
             rows={3}
             disabled={disabled || loading}
-            className="w-full p-3 border border-slate-300 rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-slate-50 resize-none"
+            className="w-full rounded-xl bg-slate-950 border border-slate-800 p-4 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 disabled:opacity-50 resize-none font-sans shadow-inner"
           />
+          <div className="absolute bottom-3 right-3 flex items-center gap-2 text-[10px] text-slate-500 font-mono">
+            <span>Ctrl + Enter to search</span>
+            <CornerDownLeft className="w-3 h-3" />
+          </div>
         </div>
 
-        {showAdvanced && (
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg grid grid-cols-2 gap-4 text-xs">
+        {/* Advanced Retrieval Settings Drawer */}
+        {showSettings && (
+          <div className="p-4 rounded-xl bg-slate-950 border border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs animate-fadeIn">
             <div>
-              <label className="block text-slate-600 font-medium mb-1">
-                Top Chunks (top_k): <span className="text-indigo-600 font-bold">{topK}</span>
-              </label>
+              <div className="flex justify-between items-center mb-1.5">
+                <span className="text-slate-300 font-medium">Top Chunks (top_k)</span>
+                <span className="font-mono font-bold text-cyan-400">{topK}</span>
+              </div>
               <input
                 type="range"
                 min="1"
                 max="10"
                 value={topK}
                 onChange={(e) => setTopK(Number(e.target.value))}
-                className="w-full accent-indigo-600"
+                className="w-full accent-cyan-400 bg-slate-800 h-1.5 rounded-lg cursor-pointer"
               />
+              <span className="text-[10px] text-slate-500 mt-1 block">Number of source passages retrieved for context</span>
             </div>
+
             <div>
-              <label className="block text-slate-600 font-medium mb-1">
-                Min Similarity Score: <span className="text-indigo-600 font-bold">{minScore.toFixed(2)}</span>
-              </label>
+              <div className="flex justify-between items-center mb-1.5">
+                <span className="text-slate-300 font-medium">Min Similarity Score</span>
+                <span className="font-mono font-bold text-cyan-400">{minScore.toFixed(2)}</span>
+              </div>
               <input
                 type="range"
                 min="0.0"
@@ -79,41 +97,47 @@ export const QuestionForm: React.FC<QuestionFormProps> = ({ onSubmit, loading, d
                 step="0.05"
                 value={minScore}
                 onChange={(e) => setMinScore(Number(e.target.value))}
-                className="w-full accent-indigo-600"
+                className="w-full accent-cyan-400 bg-slate-800 h-1.5 rounded-lg cursor-pointer"
               />
+              <span className="text-[10px] text-slate-500 mt-1 block">Relevance filter threshold</span>
             </div>
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex flex-wrap gap-1.5 items-center">
-            <span className="text-xs text-slate-400 flex items-center gap-1">
-              <HelpCircle className="w-3 h-3" /> Quick questions:
+        {/* Quick sample questions & Submit button */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-1">
+          <div className="space-y-1.5 w-full sm:w-auto">
+            <span className="text-[11px] text-slate-400 flex items-center gap-1 font-mono uppercase tracking-wide">
+              <Sparkles className="w-3 h-3 text-violet-400" /> Suggested Prompts:
             </span>
-            {sampleQueries.map((q, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setQuery(q)}
-                disabled={disabled || loading}
-                className="text-xs px-2 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 rounded transition"
-              >
-                {q}
-              </button>
-            ))}
+            <div className="flex flex-wrap gap-1.5">
+              {sampleQuestions.map((q, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setQuery(q)}
+                  disabled={disabled || loading}
+                  className="text-xs px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 transition text-left"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={disabled || loading || !query.trim()}
-            className="py-2 px-5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-medium rounded-lg shadow transition flex items-center gap-2 text-sm shrink-0"
+            className="w-full sm:w-auto py-3 px-6 rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-violet-600 hover:from-cyan-400 hover:to-violet-500 disabled:from-slate-800 disabled:to-slate-800 text-white font-semibold text-xs tracking-wider uppercase transition shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 shrink-0 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
           >
             {loading ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" /> Searching...
+                <Loader2 className="w-4 h-4 animate-spin" /> Querying RAG...
               </>
             ) : (
-              'Get Answer'
+              <>
+                <Search className="w-4 h-4" /> Ask Policy AI
+              </>
             )}
           </button>
         </div>
